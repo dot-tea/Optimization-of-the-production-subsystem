@@ -7,9 +7,21 @@ from ClassProductionSubsystem import ProductionSubsystem
 class DedicatedConverter (ProductionSubsystem):
     
     m = 0
+    '''
+    Количество разных типов ресурсов (факторов производства)
+    '''
     n = 0
+    '''
+    Количество итераций преобразователя (уровней)
+    '''
     Resource = 0
+    '''
+    Количество имеющихся ресурсов в начале процесса
+    '''
     A = 0 
+    '''
+    Матрица коэффициентов при задаче ЗЛП
+    '''
     def __init__(self, m,n):
         ProductionSubsystem.__init__(self, m, n)
         self.A = np.ones((n+1, m), dtype=float) 

@@ -5,9 +5,21 @@ from ClassProductionSubsystem import ProductionSubsystem
 class СomplicatedConverter (ProductionSubsystem):
     
     m = 0
+    '''
+    Количество разных типов ресурсов (факторов производства)
+    '''
     n = 0
+    '''
+    Количество итераций преобразователя (уровней)
+    '''
     Resource = 0
+    '''
+    Количество имеющихся ресурсов в начале процесса
+    '''
     A = 0 
+    '''
+    Матрица коэффициентов при задаче ЗЛП
+    '''
     def __init__(self, m,n):
        ProductionSubsystem.__init__(self, m, n)
        self.A = np.ones((n+1, m), dtype=float) 
@@ -28,8 +40,15 @@ class СomplicatedConverter (ProductionSubsystem):
         return int (self.p()-1-(self.m-1)-(self.n+1)+i)
 
     def R_F(self,i):
+        '''
+        Возвращает индекс компонента факторного вектора,
+        соответствующего кол-ву передаваемых вспомогательных
+        ресурсов из процесса i-го уровня на конечный процесс
+        F
+        '''
         return int (self.p()-1-(self.m-1)+i-1)
     
+    # Стоп, почему тут нельзя присвоить напрямую c[p-1] = -1?
     def formC (self):
         c=np.zeros(self.p(), dtype=float)
         for i in np.arange(0,self.p()):
