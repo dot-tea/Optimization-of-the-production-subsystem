@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 import numpy as np
 from scipy.optimize import linprog
+from scipy.optimize import OptimizeResult
+from typing import Union
 
 class ProductionSubsystem (ABC):
     
@@ -97,10 +99,17 @@ class ProductionSubsystem (ABC):
         '''
         pass
 
-    def OptimalF(self):
+    def OptimalF(self) -> OptimizeResult:
         '''
         Возвращает значение целевой функции при оптимальном
         векторе факторных потоков, т.е. при решении ЗЛП
         '''
-        temp=linprog(self.formC(), A_ub=self.formA(), b_ub=self.formB(), method='revised simplex')
-        return temp.fun
+        solution = linprog(self.formC(), A_ub=self.formA(), b_ub=self.formB(), method='revised simplex')
+        return solution
+
+    @abstractmethod
+    def getSimpleConverterCount(self) -> int:
+        pass
+
+    def getNonEmptyResourceStreamCount(self, result: OptimizeResult) -> Union[int, None]:
+        return np.count_nonzero(result.x)

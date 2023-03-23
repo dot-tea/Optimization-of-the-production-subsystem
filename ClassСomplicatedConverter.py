@@ -91,7 +91,9 @@ class СomplicatedConverter (ProductionSubsystem):
             M[self.u()-self.m+k][self.R_F(k)]=-float(self.A.sum(axis=1)[0]/self.A[0][k])
             M[self.u()-self.m+k][self.p()-1]=1.0
         return M
-            
+    
+    def getSimpleConverterCount(self) -> int:
+        return self.n + self.m + 2 
         
             
             

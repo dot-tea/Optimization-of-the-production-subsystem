@@ -76,4 +76,7 @@ class DedicatedConverter (ProductionSubsystem):
         #     M[self.u()-self.m+k][self.N(self.n-1,self.n)+(k-1)*self.n+self.n]=-float(self.A.sum(axis=1)[self.n]/self.A[self.n][k])
         #     M[self.u()-self.m+k][self.N_F(self.n)]=1.0
         return M
+
+    def getSimpleConverterCount(self) -> int:
+        return self.n * (self.m + 1) + 2
     
