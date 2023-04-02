@@ -2,6 +2,7 @@ from ClassProductionSubsystem import ProductionSubsystem
 from math import fabs
 from scipy.optimize import OptimizeResult
 from typing import Callable
+import numpy as np
 
 
 class DynamicSystem:
@@ -41,6 +42,8 @@ class DynamicSystem:
         ресурсов.
         '''
         self.productionSubsystem.n = levelCount
+        if (hasattr(self.productionSubsystem, 'A')):
+            self.productionSubsystem.A = np.ones((levelCount + 1, self.productionSubsystem.m), dtype = float)
         self.productionSubsystem.Resource = resources
         return self.productionSubsystem.OptimalF()
 
@@ -135,6 +138,7 @@ class DynamicSystem:
             sumValues[stepCount][level] = {'value': value, 'nextLevel': None}
         # 2. Для каждого предыдущего шага:
         for step in reversed(range(1, stepCount)):
+            sumValues[step] = {}
             # 3. На первом шаге управление будет фиксированным, так как startLevel уже задан.
             if step == 1:
                 optimizeResult = self.getOptimizeResult(startLevel, resourceTimeSeries[step - 1])
@@ -162,11 +166,12 @@ class DynamicSystem:
                         optimalNextLevel = nextLevel
                         optimalValue = value
                 sumValues[step][level] = {'value': optimalValue, 'nextLevel': optimalNextLevel}
-        levelSeries = []
+        levelSeries = [startLevel]
         selectedLevel = startLevel
         for step in range(1, stepCount):
             levelSeries.append(selectedLevel)
             selectedLevel = sumValues[step][selectedLevel]['nextLevel']
+        print(sumValues)
         return levelSeries
     
     def toControlSeries(self, levelSeries: list[int]) -> list[int]:
