@@ -105,6 +105,8 @@ class ProductionSubsystem (ABC):
         векторе факторных потоков, т.е. при решении ЗЛП
         '''
         solution = linprog(self.formC(), A_ub=self.formA(), b_ub=self.formB(), method='revised simplex')
+        # Так как этим способом решается задача минимизации, решение надо умножить на -1, чтобы получить максимум.
+        solution.fun *= -1
         return solution
 
     @abstractmethod

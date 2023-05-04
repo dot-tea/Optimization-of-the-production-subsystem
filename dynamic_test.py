@@ -4,14 +4,15 @@ from ClassDynamicSystem import DynamicSystem
 
 
 # -- Инициализация --
-m = 4
+
 resourceTimeSeries = [
-    [18, 10, 18, 10],
-    [20, 45, 5, 55],
-    [1, 1, 1, 1],
+    [1, 250, 120, 100, 230],
+    [50, 500, 300, 200, 100],   
+    [0.1, 100, 100, 100, 100],
 ]
 startLevel = 2
 
+m = len(resourceTimeSeries[0])
 # инициализация n не играет особой роли
 productionSubsystem = СomplicatedConverter(m, 1) 
 # productionSubsystem = DedicatedConverter(m, 1)
@@ -28,6 +29,6 @@ addedCostCoefficient = 1
 
 dynamicSystem = DynamicSystem(productionSubsystem, controlCost, structureChangeCost, addedCostCoefficient)
 
-levels = dynamicSystem.determineLevels(startLevel, 3, resourceTimeSeries)
+levels = dynamicSystem.determineLevels(startLevel, 3, resourceTimeSeries, True)
 print(levels)
 

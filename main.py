@@ -9,4 +9,4 @@ print(u)
 print(p)
 
 A=SPIII.OptimalF()
-print(A)
+print(A.fun)
