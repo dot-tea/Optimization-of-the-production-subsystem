@@ -44,7 +44,7 @@ class DynamicSystem:
         self.productionSubsystem.n = levelCount
         if (hasattr(self.productionSubsystem, 'A')):
             self.productionSubsystem.A = np.ones((levelCount + 1, self.productionSubsystem.m), dtype = float)
-        self.productionSubsystem.Resource = resources
+        self.productionSubsystem.Resource = np.array(resources)
         return self.productionSubsystem.OptimalF()
 
     def getControlCost(self, solution: OptimizeResult) -> float:
@@ -218,7 +218,7 @@ class DynamicSystem:
         for step in range(1, stepCount + 1):
             levelSeries.append(selectedLevel)
             selectedLevel = sumValues[step][selectedLevel]['nextLevel']
-        print(sumValues)
+        if verbose: print(sumValues)
         return levelSeries
     
     def toControlSeries(self, levelSeries: list[int]) -> list[int]:
@@ -226,5 +226,16 @@ class DynamicSystem:
         for i in range(len(levelSeries) - 1):
             controlSeries.append(levelSeries[i + 1] - levelSeries[i])
         return controlSeries
+    
+    @staticmethod
+    def averageComplexity(levelSeries: list[int]) -> float:
+        return np.sum(levelSeries) / len(levelSeries)
+    
+    @staticmethod
+    def averageVariation(levelSeries: list[int]) -> float:
+        sum = 0
+        for i in range(len(levelSeries) - 1):
+            sum += fabs(levelSeries[i + 1] - levelSeries[i])
+        return sum / len(levelSeries)
 
     
