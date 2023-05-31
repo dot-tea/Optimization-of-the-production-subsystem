@@ -22,18 +22,24 @@ class DynamicSystem:
     '''
     Коэффициент надбавленной стоимости.
     '''
+    solver = 'scipy_revised_simplex'
+    '''
+    Метод решения задачи линейного программирования, принимаемый ProductionSubsystem.
+    '''
     def __init__(
             self, 
             productionSubsystem: ProductionSubsystem,
             controlCostFunction: Callable[[int, int], float],
             structureChangeCostFunction: Callable[[int], float],
-            addedCostCoefficient: float = 1
+            addedCostCoefficient: float = 1,
+            solver: str = 'scipy_revised_simplex',
 
         ):
         self.productionSubsystem = productionSubsystem
         self.controlCostFunction = controlCostFunction
         self.stuctureChangeCostFunction = structureChangeCostFunction
         self.addedCostCoefficient = addedCostCoefficient
+        self.solver = solver
     
     def getOptimizeResult(self, levelCount: int, resources: list[float]) -> OptimizeResult:
         '''
@@ -45,7 +51,7 @@ class DynamicSystem:
         if (hasattr(self.productionSubsystem, 'A')):
             self.productionSubsystem.A = np.ones((levelCount + 1, self.productionSubsystem.m), dtype = float)
         self.productionSubsystem.Resource = np.array(resources)
-        return self.productionSubsystem.OptimalF()
+        return self.productionSubsystem.OptimalF(self.solver)
 
     def getControlCost(self, solution: OptimizeResult) -> float:
         '''

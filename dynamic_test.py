@@ -1,3 +1,4 @@
+from time import time
 from ClassСomplicatedConverter import СomplicatedConverter
 from ClassDedicatedConverter import DedicatedConverter
 from ClassDynamicSystem import DynamicSystem
@@ -6,17 +7,17 @@ from ClassDynamicSystem import DynamicSystem
 # -- Инициализация --
 
 resourceTimeSeries = [
-    [18, 10, 18, 10],
-    [20, 50, 5, 55],
-    [1, 1, 1, 10],
-    [55, 8, 50, 75],
-    [45, 35, 55, 50],
-    [38, 35, 57, 30],
+    [0.1, 100, 180, 100],
+    [20, 500, 5, 550],
+    [1, 10, 100, 10],
+    [55, 8, 500, 75],
+    [45, 350, 55, 50],
+    [38, 350, 57, 30],
     [80, 18, 58, 80],
-    [1, 5, 1, 1],
+    [1, 2000, 1, 1],
     [80, 60, 75, 60],
-    [80, 60, 75, 60],
-    [78, 15, 35, 55],
+    [80, 60, 120, 60],
+    [78, 1500, 35, 55],
 ]
 startLevel = 2
 
@@ -35,8 +36,14 @@ def structureChangeCost(levelDifference: int) -> float:
 
 addedCostCoefficient = 1
 
-dynamicSystem = DynamicSystem(productionSubsystem, controlCost, structureChangeCost, addedCostCoefficient)
+dynamicSystem = DynamicSystem(productionSubsystem, controlCost, structureChangeCost, addedCostCoefficient, 'scipy_highs')
 
-levels = dynamicSystem.determineLevels(startLevel, 4, resourceTimeSeries)
+elapsed_time = []
+for i in range(1000):
+    start = time()
+    levels = dynamicSystem.determineLevels(startLevel, 3, resourceTimeSeries)
+    end = time()
+    elapsed_time.append(end - start)
 print(levels)
 print(DynamicSystem.averageComplexity(levels), DynamicSystem.averageVariation(levels))
+print(sum(elapsed_time) / len(elapsed_time))

@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
-import numpy as np
+from LinearProgrammingSolver.lp_solver import LPSolver
 from scipy.optimize import linprog
 from scipy.optimize import OptimizeResult
 from typing import Union
+import numpy as np
 
 class ProductionSubsystem (ABC):
     
@@ -99,12 +100,40 @@ class ProductionSubsystem (ABC):
         '''
         pass
 
-    def OptimalF(self) -> OptimizeResult:
+    def OptimalF(self, solver: str = 'scipy_revised_simplex') -> OptimizeResult:
         '''
         Возвращает значение целевой функции при оптимальном
         векторе факторных потоков, т.е. при решении ЗЛП
         '''
-        solution = linprog(self.formC(), A_ub=self.formA(), b_ub=self.formB(), method='revised simplex')
+        solution = None
+        if solver == 'scipy_revised_simplex':
+            solution = linprog(self.formC(), A_ub=self.formA(), b_ub=self.formB(), method='revised simplex')
+        elif solver == 'scipy_highs':
+            solution = linprog(self.formC(), A_ub=self.formA(), b_ub=self.formB(), method='highs')
+        elif solver == 'scipy_highs_ds':
+            solution = linprog(self.formC(), A_ub=self.formA(), b_ub=self.formB(), method='highs-ds')
+        elif solver == 'scipy_highs_ipm':
+            solution = linprog(self.formC(), A_ub=self.formA(), b_ub=self.formB(), method='highs-ipm')
+        elif solver == 'scipy_interior_point':
+            solution = linprog(self.formC(), A_ub=self.formA(), b_ub=self.formB(), method='interior-point')
+        elif solver == 'scipy_simplex':
+            solution = linprog(self.formC(), A_ub=self.formA(), b_ub=self.formB(), method='simplex')
+        else:
+            lpsolver = LPSolver(self.formA(), self.formB(), np.array(), np.array(), self.formC())
+            x, fun = None
+            if solver == 'linpro':
+                x, fun = lpsolver.solve_linpro()
+            elif solver == 'ortools':
+                x, fun = lpsolver.solve_ortools()
+            elif solver == 'cvxopt':
+                x, fun = lpsolver.solve_cvxopt()
+            elif solver == 'pulp':
+                x, fun = lpsolver.solve_pulp()
+            else:
+                raise Exception('Unidentified solver.')
+            solution = OptimizeResult()
+            solution.x = x
+            solution.fun = fun
         # Так как этим способом решается задача минимизации, решение надо умножить на -1, чтобы получить максимум.
         solution.fun *= -1
         return solution
@@ -115,3 +144,4 @@ class ProductionSubsystem (ABC):
 
     def getNonEmptyResourceStreamCount(self, result: OptimizeResult) -> Union[int, None]:
         return np.count_nonzero(result.x)
+
