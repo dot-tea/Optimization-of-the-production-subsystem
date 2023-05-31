@@ -1,0 +1,3 @@
+[submodule "LinearProgrammingSolver"]
+	path = LinearProgrammingSolver
+	url = https://github.com/dot-tea/LinearProgrammingSolver
