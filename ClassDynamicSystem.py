@@ -1,10 +1,18 @@
 from ClassProductionSubsystem import ProductionSubsystem
+from copy import deepcopy
+from enum import Enum
 from math import fabs
 from scipy.optimize import OptimizeResult
-from typing import Callable
+from typing import Callable, Union
 import numpy as np
 
 
+class OperatingMode(Enum):
+    DYNAMIC_OBSERVING = 1
+    DYNAMIC_SIMPLIFIED = 2
+    DYNAMIC_COMPLICATED = 3
+    STATIONARY_BASIC = 4
+    STATIONARY_STARTING = 5
 class DynamicSystem:
     productionSubsystem = None
     '''
@@ -243,5 +251,41 @@ class DynamicSystem:
         for i in range(len(levelSeries) - 1):
             sum += fabs(levelSeries[i + 1] - levelSeries[i])
         return sum / len(levelSeries)
+
+    def getDegenerateLevelSeries(
+            self,
+            startLevel: int,
+            maxLevel: int,
+            resourceTimeSeries: list[list[float]],
+            verbose: bool = False,
+    ) -> list[int]:
+        originalControlCostFunction = deepcopy(self.controlCostFunction)
+        originalStructureChangeCostFunction = deepcopy(self.stuctureChangeCostFunction)
+        self.controlCostFunction = lambda a, b: 0
+        self.stuctureChangeCostFunction = lambda a: 0
+        levelSeries = self.determineLevels(startLevel, maxLevel, resourceTimeSeries, verbose)
+        self.controlCostFunction = originalControlCostFunction
+        self.stuctureChangeCostFunction = originalStructureChangeCostFunction
+        return levelSeries
+
+    def getOperatingMode(
+            self,
+            levelSeries: list[int],
+            degenerateLevelSeries: list[int],
+    ) -> OperatingMode:
+        averageVariation = DynamicSystem.averageVariation(levelSeries)
+        if np.isclose(averageVariation, 0):
+            return OperatingMode.STATIONARY_STARTING
+        elif np.isclose(averageVariation, fabs(levelSeries[1] - levelSeries[0]) / len(levelSeries)):
+            return OperatingMode.STATIONARY_BASIC
+        else:
+            degenerateAverageVariation = DynamicSystem.averageVariation(degenerateLevelSeries)
+            if np.isclose(averageVariation, degenerateAverageVariation):
+                return OperatingMode.DYNAMIC_OBSERVING
+            elif averageVariation < degenerateAverageVariation:
+                return OperatingMode.DYNAMIC_SIMPLIFIED
+            else:
+                return OperatingMode.DYNAMIC_COMPLICATED
+
 
     

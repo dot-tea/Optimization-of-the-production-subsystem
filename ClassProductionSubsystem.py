@@ -119,8 +119,9 @@ class ProductionSubsystem (ABC):
         elif solver == 'scipy_simplex':
             solution = linprog(self.formC(), A_ub=self.formA(), b_ub=self.formB(), method='simplex')
         else:
-            lpsolver = LPSolver(self.formA(), self.formB(), np.array(), np.array(), self.formC())
-            x, fun = None
+            lpsolver = LPSolver(self.formA(), self.formB(), np.zeros((1, self.p())), np.zeros(1), self.formC())
+            x = None 
+            f = None
             if solver == 'linpro':
                 x, fun = lpsolver.solve_linpro()
             elif solver == 'ortools':
