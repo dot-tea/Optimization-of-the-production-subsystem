@@ -22,7 +22,7 @@ class DynamicSystem:
     '''
     Функция затрат на управление текущей иерархической структурой ПС.
     '''
-    stuctureChangeCostFunction = None
+    structureChangeCostFunction = None
     '''
     Функция затрат на изменение иерархической структуры ПС.
     '''
@@ -34,20 +34,31 @@ class DynamicSystem:
     '''
     Метод решения задачи линейного программирования, принимаемый ProductionSubsystem.
     '''
+    controlCostCoefficient = 0
+    '''
+    Коэффициент, используемый в определении функции затрат на текущее управление.
+    '''
+    structureChangeCostCoefficient = 0
+    '''
+    Коэффициент, используемый в определии функции затрат на изменение.
+    '''
     def __init__(
             self, 
             productionSubsystem: ProductionSubsystem,
             controlCostFunction: Callable[[int, int], float],
             structureChangeCostFunction: Callable[[int], float],
             addedCostCoefficient: float = 1,
+            controlCostCoefficient: float = 0,
+            structureChangeCostCoefficient: float = 0,
             solver: str = 'scipy_revised_simplex',
-
         ):
         self.productionSubsystem = productionSubsystem
         self.controlCostFunction = controlCostFunction
-        self.stuctureChangeCostFunction = structureChangeCostFunction
+        self.structureChangeCostFunction = structureChangeCostFunction
         self.addedCostCoefficient = addedCostCoefficient
         self.solver = solver
+        self.controlCostCoefficient = controlCostCoefficient
+        self.structureChangeCostCoefficient = structureChangeCostCoefficient
     
     def getOptimizeResult(self, levelCount: int, resources: list[float]) -> OptimizeResult:
         '''
@@ -66,7 +77,18 @@ class DynamicSystem:
         Возвращает значение стоимости затрат на управление структурой ПФ в зависимости
         от числа слоёв в преобразователе.
         '''
-        return self.controlCostFunction(self.productionSubsystem.getSimpleConverterCount(), self.productionSubsystem.getNonEmptyResourceStreamCount(solution))
+        return self.controlCostFunction(
+                self.productionSubsystem.getSimpleConverterCount(), 
+                self.productionSubsystem.getNonEmptyResourceStreamCount(solution), 
+                self.controlCostCoefficient
+        )
+
+    def getStructureChangeCost(self, levelDifference: int) -> float:
+        '''
+        Возвращает значение стоимости затрат на изменение числа уровней преобразоветля 
+        в зависимости от абсолютной величины этого изменения.
+        '''
+        return self.structureChangeCostFunction(levelDifference, self.structureChangeCostCoefficient)
 
     def functional(
             self,
@@ -85,7 +107,7 @@ class DynamicSystem:
             optimizeResult = self.getOptimizeResult(currentLevel, resourceTimeSeries[t])
             sum += self.addedCostCoefficient \
                 * optimizeResult.fun \
-                - self.stuctureChangeCostFunction(fabs(controlTimeSeries[t])) \
+                - self.getStructureChangeCost(fabs(controlTimeSeries[t])) \
                 - self.getControlCost(optimizeResult)
             currentLevel += controlTimeSeries[t]
         optimizeResult = self.getOptimizeResult(currentLevel, resourceTimeSeries[stepCount - 1])
@@ -127,7 +149,7 @@ class DynamicSystem:
         for level in range(1, maxLevel + 1):
             optimizeResult = self.getOptimizeResult(level, resource)
             value = self.addedCostCoefficient * optimizeResult.fun - self.getControlCost(optimizeResult) \
-                - self.stuctureChangeCostFunction(fabs(nextLevel - level))
+                - self.structureChangeCostFunction(fabs(nextLevel - level))
             if ((not value) or value > bestValue):
                 bestLevel = level
                 bestValue = value
@@ -188,9 +210,9 @@ class DynamicSystem:
                     if verbose: 
                         print('Checking level ', nextLevel, ' as next level')
                         print('Absolute difference: ', fabs(nextLevel - startLevel))
-                        print('Structure change cost: ', self.stuctureChangeCostFunction(fabs(nextLevel - startLevel)))
+                        print('Structure change cost: ', self.getStructureChangeCost(fabs(nextLevel - startLevel)))
                         print('Bonus functional value for following the optimal path: ', sumValues[step + 1][nextLevel]['value'])
-                    value = partialValue - self.stuctureChangeCostFunction(fabs(nextLevel - startLevel)) + sumValues[step + 1][nextLevel]['value']
+                    value = partialValue - self.getStructureChangeCost(fabs(nextLevel - startLevel)) + sumValues[step + 1][nextLevel]['value']
                     if verbose: print('Total functional value: ', value)
                     if ((optimalValue == None) or (value > optimalValue)):
                         if verbose and optimalValue == None: print('Setting as optimal')
@@ -217,9 +239,9 @@ class DynamicSystem:
                     if verbose: 
                         print('Checking level ', nextLevel, ' as next level')
                         print('Absolute difference: ', fabs(nextLevel - startLevel))
-                        print('Structure change cost: ', self.stuctureChangeCostFunction(fabs(nextLevel - startLevel)))
+                        print('Structure change cost: ', self.getStructureChangeCost(fabs(nextLevel - startLevel)))
                         print('Bonus functional value for following the optimal path: ', sumValues[step + 1][nextLevel]['value'])
-                    value = partialValue - self.stuctureChangeCostFunction(fabs(nextLevel - level)) + sumValues[step + 1][nextLevel]['value']
+                    value = partialValue - self.getStructureChangeCost(fabs(nextLevel - level)) + sumValues[step + 1][nextLevel]['value']
                     if verbose: print('Total functional value: ', value)
                     if ((optimalValue == None) or (value > optimalValue)):
                         if verbose and optimalValue == None: print('Setting as optimal')
@@ -236,6 +258,10 @@ class DynamicSystem:
         return levelSeries
     
     def toControlSeries(self, levelSeries: list[int]) -> list[int]:
+        '''
+        Преобразует последовательность уровней для динамической системы в
+        последовательность управлений на каждом этапе системы.
+        '''
         controlSeries = []
         for i in range(len(levelSeries) - 1):
             controlSeries.append(levelSeries[i + 1] - levelSeries[i])
@@ -243,10 +269,16 @@ class DynamicSystem:
     
     @staticmethod
     def averageComplexity(levelSeries: list[int]) -> float:
+        '''
+        Возвращает среднюю сложность ряда уровней для производственной системы.
+        '''
         return np.sum(levelSeries) / len(levelSeries)
     
     @staticmethod
     def averageVariation(levelSeries: list[int]) -> float:
+        '''
+        Возвращает среднюю изменчивость ряда уровней для производственной системы.
+        '''
         sum = 0
         for i in range(len(levelSeries) - 1):
             sum += fabs(levelSeries[i + 1] - levelSeries[i])
@@ -259,13 +291,17 @@ class DynamicSystem:
             resourceTimeSeries: list[list[float]],
             verbose: bool = False,
     ) -> list[int]:
-        originalControlCostFunction = deepcopy(self.controlCostFunction)
-        originalStructureChangeCostFunction = deepcopy(self.stuctureChangeCostFunction)
-        self.controlCostFunction = lambda a, b: 0
-        self.stuctureChangeCostFunction = lambda a: 0
+        '''
+        Возвращает последовательность уровней при нулевых функциях затрат, что является
+        случаем вырожденной динамической задачи оптимизации.
+        '''
+        originalControlCostCoefficient = self.controlCostCoefficient
+        originalStructureChangeCostCoefficient = self.structureChangeCostCoefficient
+        self.controlCostCoefficient = 0
+        self.structureChangeCostCoefficient = 0
         levelSeries = self.determineLevels(startLevel, maxLevel, resourceTimeSeries, verbose)
-        self.controlCostFunction = originalControlCostFunction
-        self.stuctureChangeCostFunction = originalStructureChangeCostFunction
+        self.controlCostCoefficient = originalControlCostCoefficient
+        self.structureChangeCostCoefficient = originalStructureChangeCostCoefficient
         return levelSeries
 
     def getOperatingMode(
@@ -273,6 +309,11 @@ class DynamicSystem:
             levelSeries: list[int],
             degenerateLevelSeries: list[int],
     ) -> OperatingMode:
+        '''
+        Возвращает режим работы динамической системы при данной последовательности
+        уровней в динамической системе и "эталонной" последовательности уровней
+        в вырожденной задаче (её можно получить через DynamicSystem::getDegenerateLevelSeries).
+        '''
         averageVariation = DynamicSystem.averageVariation(levelSeries)
         if np.isclose(averageVariation, 0):
             return OperatingMode.STATIONARY_STARTING

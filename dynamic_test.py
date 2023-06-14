@@ -37,17 +37,15 @@ m = len(resourceTimeSeries[0])
 productionSubsystem = СomplicatedConverter(m, 1) 
 # productionSubsystem = DedicatedConverter(m, 1)
 
-def controlCost(simpleConverterCount: int, nonEmptyResourceStreamCount: int) -> float:
-    beta = 0
+def controlCost(simpleConverterCount: int, nonEmptyResourceStreamCount: int, beta: float) -> float:
     return beta * (simpleConverterCount + nonEmptyResourceStreamCount)
 
-def structureChangeCost(levelDifference: int) -> float:
-    alpha = 0
+def structureChangeCost(levelDifference: int, alpha: float) -> float:
     return alpha * levelDifference * levelDifference
 
 addedCostCoefficient = 1
 
-dynamicSystem = DynamicSystem(productionSubsystem, controlCost, structureChangeCost, addedCostCoefficient)
+dynamicSystem = DynamicSystem(productionSubsystem, controlCost, structureChangeCost, addedCostCoefficient, 0, 0)
 
 elapsed_time = []
 for i in range(1):
