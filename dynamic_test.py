@@ -44,8 +44,17 @@ def structureChangeCost(levelDifference: int, alpha: float) -> float:
     return alpha * levelDifference * levelDifference
 
 addedCostCoefficient = 1
+controlCostCoefficient = 0
+structureChangeCostCoefficient = 0
 
-dynamicSystem = DynamicSystem(productionSubsystem, controlCost, structureChangeCost, addedCostCoefficient, 0, 0)
+dynamicSystem = DynamicSystem(
+        productionSubsystem, 
+        controlCost, 
+        structureChangeCost, 
+        addedCostCoefficient, 
+        controlCostCoefficient, 
+        structureChangeCostCoefficient
+)
 
 elapsed_time = []
 for i in range(1):

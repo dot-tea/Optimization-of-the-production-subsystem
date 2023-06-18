@@ -1,9 +1,8 @@
 from ClassProductionSubsystem import ProductionSubsystem
-from copy import deepcopy
 from enum import Enum
 from math import fabs
 from scipy.optimize import OptimizeResult
-from typing import Callable, Union
+from typing import Callable, Tuple, Union
 import numpy as np
 
 
@@ -30,7 +29,7 @@ class DynamicSystem:
     '''
     Коэффициент надбавленной стоимости.
     '''
-    solver = 'scipy_revised_simplex'
+    solver = 'scipy_highs'
     '''
     Метод решения задачи линейного программирования, принимаемый ProductionSubsystem.
     '''
@@ -50,7 +49,7 @@ class DynamicSystem:
             addedCostCoefficient: float = 1,
             controlCostCoefficient: float = 0,
             structureChangeCostCoefficient: float = 0,
-            solver: str = 'scipy_revised_simplex',
+            solver: str = 'scipy_highs',
         ):
         self.productionSubsystem = productionSubsystem
         self.controlCostFunction = controlCostFunction
@@ -161,7 +160,8 @@ class DynamicSystem:
             maxLevel: int,
             resourceTimeSeries: list[list[float]],
             verbose: bool = False,
-    ) -> list[int]:
+            returnFunctionalValue: bool = False,
+    ) -> Union[list[int], Tuple[list[int], float]]:
         '''
         Возвращает оптимальную траекторию уровней для динамического процесса.
         '''
@@ -255,6 +255,8 @@ class DynamicSystem:
             levelSeries.append(selectedLevel)
             selectedLevel = sumValues[step][selectedLevel]['nextLevel']
         if verbose: print(sumValues)
+        if returnFunctionalValue:
+            return (levelSeries, sumValues[1][startLevel]['value'])
         return levelSeries
     
     def toControlSeries(self, levelSeries: list[int]) -> list[int]:
