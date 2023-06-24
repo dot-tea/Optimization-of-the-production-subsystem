@@ -1,10 +1,11 @@
 from ClassСomplicatedConverter import СomplicatedConverter
 from ClassDedicatedConverter import DedicatedConverter
 from ClassDynamicSystem import DynamicSystem
-from matplotlib.pyplot import show, step, xlabel, ylabel
+from matplotlib.pyplot import show, step, xlabel, ylabel, subplots
 from time import time
 import os
 import sys
+from ClassResourceSeriesGenerator import ResourceSeriesGenerator as RSG
 
 
 # -- Инициализация --
@@ -19,8 +20,10 @@ resourceTimeSeries = [
     [38, 350, 57, 30],
     [0.1, 100, 180, 100],
 ]
+#resourceTimeSeries = RSG.importFile('output3_test.txt')
 startLevel = 2
 
+ySeries = []
 for j in range(len(resourceTimeSeries[0])):
     y = []
     T = range(len(resourceTimeSeries))
@@ -30,7 +33,23 @@ for j in range(len(resourceTimeSeries[0])):
     #xlabel('Шаг, t')
     #ylabel('Ресурс, R')
     #show()
-    
+    ySeries.append(y)
+
+T = range(len(resourceTimeSeries))
+fig, axs = subplots(2, 2)
+axs[0, 0].step(T, ySeries[0])
+axs[0, 0].set_title('N')
+axs[0, 0].set_ylabel('Ресурс')
+axs[0, 1].step(T, ySeries[1])
+axs[0, 1].set_title('R1')
+axs[1, 0].step(T, ySeries[2])
+axs[1, 0].set_title('R2')
+axs[1, 0].set_xlabel('Шаг')
+axs[1, 0].set_ylabel('Ресурс')
+axs[1, 1].step(T, ySeries[3])
+axs[1, 1].set_title('R3')
+axs[1, 1].set_xlabel('Шаг')
+show()
 
 m = len(resourceTimeSeries[0])
 # инициализация n не играет особой роли
@@ -53,7 +72,8 @@ dynamicSystem = DynamicSystem(
         structureChangeCost, 
         addedCostCoefficient, 
         controlCostCoefficient, 
-        structureChangeCostCoefficient
+        structureChangeCostCoefficient,
+        'scipy_highs'
 )
 
 elapsed_time = []
@@ -64,7 +84,7 @@ for i in range(1):
     sys.stdout = nothing
     sys.stderr = nothing
     start = time()
-    levels = dynamicSystem.determineLevels(startLevel, 3, resourceTimeSeries)
+    levels = dynamicSystem.determineLevels(startLevel, 20, resourceTimeSeries)
     end = time()
     sys.stdout = origOut
     sys.stderr = origErr

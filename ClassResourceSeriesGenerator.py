@@ -1,3 +1,4 @@
+from ast import literal_eval
 from math import sin
 import numpy as np
 
@@ -68,3 +69,29 @@ class ResourceSeriesGenerator:
             x += step
         result = np.random.normal(result, noise)
         return result
+
+    @staticmethod
+    def random(
+            length: int,
+            height: float = 0,
+            range: float = 100,
+    ) -> list[float]:
+        return np.random.rand(length) * height + range
+
+    @staticmethod
+    def exportFile(list2d: list[list], fileName: str) -> None:
+        file = open(fileName, 'w')
+        for row in list2d:
+            file.writelines(str(row) + "\n")
+        file.close()
+    
+    @staticmethod
+    def importFile(fileName: str) -> list[list]:
+        file = open(fileName, 'r')
+        list2d = []
+        for row in file:
+            print(row)
+            list2d.append(literal_eval(row))
+        file.close()
+        return list2d
+    

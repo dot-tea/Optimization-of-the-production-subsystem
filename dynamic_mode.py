@@ -1,11 +1,13 @@
 from ClassСomplicatedConverter import СomplicatedConverter
 from ClassDedicatedConverter import DedicatedConverter
 from ClassDynamicSystem import DynamicSystem
-from matplotlib.pyplot import scatter, show, xlabel, ylabel, pcolor, colorbar
+from matplotlib.pyplot import scatter, show, xlabel, ylabel, pcolor, colorbar, subplots
 from time import time
 import numpy as np
 import os
 import sys
+import matplotlib.colors as colors
+from ClassResourceSeriesGenerator import ResourceSeriesGenerator as RSG
 
 
 # -- Инициализация --
@@ -20,9 +22,10 @@ resourceTimeSeries = [
     [38, 350, 57, 30],
     [0.1, 100, 180, 100],
 ]
+#resourceTimeSeries = RSG.importFile('output3_test.txt')
 startLevel = 2
 maxLevel = 10
-    
+
 
 m = len(resourceTimeSeries[0])
 productionSubsystem = СomplicatedConverter(m, 1) 
@@ -48,10 +51,13 @@ dynamicSystem = DynamicSystem(
 
 markerMap = [None, 'o', '^', 's', 'P', 's']
 pointMap = [None, {'x': [], 'y': []}, {'x': [], 'y': []}, {'x': [], 'y': []}, {'x': [], 'y': []}, {'x': [], 'y': []}]
+labelMap = [None, 'Д1', 'Д2', 'Д3', 'С1', 'С2']
 
-normalizedControlCosts = np.linspace(0, 50, 10)
-normalizedStructureChangeCosts = np.linspace(0, 50, 10)
-values = np.zeros((10, 10))
+normalizedControlCosts = np.linspace(0, 10, 20)
+normalizedStructureChangeCosts = np.linspace(0, 50, 20)
+values = np.zeros((20, 20))
+maxValue = None
+minValue = None
 degenerateSeries = dynamicSystem.getDegenerateLevelSeries(startLevel, maxLevel, resourceTimeSeries)
 for i, x in enumerate(normalizedControlCosts):
     for j, y in enumerate(normalizedStructureChangeCosts):
@@ -62,14 +68,21 @@ for i, x in enumerate(normalizedControlCosts):
         pointMap[numericMode]['x'].append(x)
         pointMap[numericMode]['y'].append(y)
         values[i][j] = value
-        
+        if maxValue == None or value > maxValue: maxValue = value
+        if minValue == None or value < minValue: minValue = value
+
+fig, axs = subplots()
 for mode, points in enumerate(pointMap):
     if markerMap[mode] == None:
         continue
-    scatter(points['x'], points['y'], marker = markerMap[mode])
+    axs.scatter(points['x'], points['y'], marker = markerMap[mode], label = labelMap[mode])
 
+axs.legend()
+axs.set_xlabel('ξ')
+axs.set_ylabel('η')
 show()
 plot = pcolor(normalizedControlCosts, normalizedStructureChangeCosts, values)
 colorbar(plot)
+xlabel('ξ')
+ylabel('η')
 show()
-        
